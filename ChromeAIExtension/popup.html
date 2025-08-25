@@ -6,6 +6,17 @@
     <title>AI Article Summarizer</title>
 </head>
 <body style="min-width: 200px; padding: 10px; font-family:Arial, Helvetica, sans-serif">
-    Hello from popup
+    <select id="summary-type">
+        <option value="brief">Brief</option>
+        <option value="detailed">Detailed</option>
+        <option value="bullet points">Bullet Points</option>
+    </select>
+
+    <button id="summarize-btn">Summarize</button>
+    <button id="copy-btn">Copy</button>
+
+    <pre id="result">Select summary type and click to Summarize</pre>
+
+    <script src="popup.js"></script>
 </body>
 </html>
