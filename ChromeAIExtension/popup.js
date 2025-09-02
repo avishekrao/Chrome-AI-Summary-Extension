@@ -5,43 +5,34 @@ document.getElementById("summarize-btn").addEventListener("click", async () => {
 
     const summaryType = document.getElementById("summary-type").value;
     
-    try {
-    
-        // 1 - Get user's API key
+    // 1 - Get user's API key
 
-        const { geminiApiKey } = await new Promise((resolve) => {
-            chrome.storage.sync.get(['geminiApiKey'], resolve);
-        });
-        
-        if (!geminiApiKey) {
-            result.textContent = "No API key set. Click the gear icon to add one.";
+    chrome.storage.sync.get(["geminiApiKey"], async (result) => {
+        if (!result.geminiApiKey) {
+            result.innerHTML = "No API key set. Click the gear icon to add one.";
             return;
         }
 
-        // 2 - Ask content.js for the page text
+    // 2 - Ask content.js for the page text
 
-        const [tab] = await new Promise((resolve) => {
-            chrome.tabs.query({active:true, currentWindow: true}, resolve);
+        chrome.tabs.query({active:true, currentWindow: true}, ([tab]) => {
+            chrome.tabs.sendMessage(tab.id, {type: "GET_ARTICLE_TEXT"}, async (res) => {
+                if (!res || !res.text) {
+                    result.textContent = "Couldn't extract text from this page.";
+                    return;
+                }
+
+                // 3 - Send text to Gemini
+                try {
+                    const summary = await getGeminiSummary(res.text, summaryType, result.geminiApiKey);
+                    result.innerText = summary;
+                } catch (error) {
+                    result.innerText = `Error: ${error.message || "Failed to generate summary."}`;
+                }
+            });
         });
-        
-        const {text} = await new Promise((resolve) => {
-            chrome.tabs.sendMessage(tab.id, {type: "GET_ARTICLE_TEXT" }, resolve);            
-        });
-
-        if (!text) {
-            result.textContent = "Couldn't extract text from this page.";
-            return;
-        }
-    
-        // 3 - Send text to Gemini
-
-        const summary = await getGeminiSummary(text, summaryType, geminiApiKey);
-        result.textContent = summary;
-        
-    } catch(error) {
-        result.textContent = "Gemini error: " + error.message;
-    }    
-});
+    });
+});       
 
 async function getGeminiSummary(rawText, type, apiKey) {
     const max = 20000;
@@ -72,4 +63,3 @@ async function getGeminiSummary(rawText, type, apiKey) {
     const data = await res.json();
     return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "No summary.";
 }
-
