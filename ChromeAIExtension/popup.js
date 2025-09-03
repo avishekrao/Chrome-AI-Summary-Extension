@@ -49,7 +49,7 @@ async function getGeminiSummary(rawText, type, apiKey) {
     const promptMap = {
         brief: `Summarize in 2 - 3 sentences: \n\n${text}`,
         detailed: `Give a detailed summary: \n\n${text}`,
-        bullets: `Summarize in 5 - 7 bullet points (start each line with "- "):\n\n${text}`,
+        bullets: `Summarize the following article in 5-7 key points. Format each point as a line starting with "- " (dash followed by a space). Do not use asterisks or other bullet symbols, only use the dash. Keep each point concise and focused on a single key insight from the article:\n\n${text}`,
     };
 
     const prompt = promptMap[type] || promptMap.brief;
