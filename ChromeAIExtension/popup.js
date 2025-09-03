@@ -42,6 +42,18 @@ document.getElementById("summarize-btn").addEventListener("click", async () => {
     });
 });       
 
+document.getElementById("copy-btn").addEventListener("click", () => {
+    const txt = document.getElementById("result").innerText;
+    if (!txt) return;
+
+    navigator.clipboard.writeText(txt).then(() => {
+        const copyBtn = document.getElementById("copy-btn");
+        const origText = copyBtn.innerText;
+        copyBtn.innerText = "Copied!";
+        setTimeout(() => copyBtn.innerText = origText, 2000);
+    });
+});
+
 async function getGeminiSummary(rawText, type, apiKey) {
     const max = 20000;
     const text = rawText.length > max ? rawText.slice(0, max) + "..." : rawText;
