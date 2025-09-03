@@ -1,15 +1,16 @@
 document.getElementById("summarize-btn").addEventListener("click", async () => {
-    const result = document.getElementById("result");
+    const resultEl = document.getElementById("result");
 
-    result.innerHTML = '<div class="loader"></div>';
+    resultEl.innerHTML = '<div class="loader"></div>';
 
     const summaryType = document.getElementById("summary-type").value;
     
     // 1 - Get user's API key
 
-    chrome.storage.sync.get(["geminiApiKey"], async (result) => {
-        if (!result.geminiApiKey) {
-            result.innerHTML = "No API key set. Click the gear icon to add one.";
+    chrome.storage.sync.get(["geminiApiKey"], (store) => {
+        const geminiApiKey = store?.geminiApiKey;
+        if (!geminiApiKey) {
+            resultEl.innerHTML = "No API key set. Click the gear icon to add one.";
             return;
         }
 
@@ -17,17 +18,24 @@ document.getElementById("summarize-btn").addEventListener("click", async () => {
 
         chrome.tabs.query({active:true, currentWindow: true}, ([tab]) => {
             chrome.tabs.sendMessage(tab.id, {type: "GET_ARTICLE_TEXT"}, async (res) => {
-                if (!res || !res.text) {
-                    result.textContent = "Couldn't extract text from this page.";
+                if (chrome.runtime.lastError) {
+                    // e.g. "Could not establish connection. Receiving end does not exist."
+                    resultEl.textContent = "Couldn't reach the content script on this page.";
+                    return; 
+                }
+                
+                const text = res?.text;
+                if (!text) {
+                    resultEl.textContent = "Couldn't extract text from this page.";
                     return;
                 }
 
                 // 3 - Send text to Gemini
                 try {
-                    const summary = await getGeminiSummary(res.text, summaryType, result.geminiApiKey);
-                    result.innerText = summary;
+                    const summary = await getGeminiSummary(text, summaryType, geminiApiKey);
+                    resultEl.innerText = summary;
                 } catch (error) {
-                    result.innerText = `Error: ${error.message || "Failed to generate summary."}`;
+                    resultEl.innerText = `Error: ${error.message || "Failed to generate summary."}`;
                 }
             });
         });
